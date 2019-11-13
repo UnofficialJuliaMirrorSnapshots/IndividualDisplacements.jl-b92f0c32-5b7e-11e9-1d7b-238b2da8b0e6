@@ -34,13 +34,14 @@ extended and modified configuration of the standard MITgcm test case.
 
 p=dirname(pathof(IndividualDisplacements))
 include(joinpath(p,"PlotIndDisp.jl"))
-PyPlot.figure(); PlotBasic(df,300); gcf()
+PyPlot.figure(); PlotBasic(df,300,100000.0); gcf()
 ```
 """
 function ex_2()
    dirIn="flt_example/"
    prec=Float32
    df=IndividualDisplacements.ReadDisplacements(dirIn,prec)
+   uvetc=IndividualDisplacements.ReadGriddedFields()
    #
    tmp=df[df.ID .== 200, :]
    nSteps=Int32(tmp[end,:time]/3600)-2
@@ -53,13 +54,13 @@ function ex_2()
        ref[2,i+1]-ref[2,i]>maxLat/2 ? ref[2,i+1:end]-=fill(maxLat,(nSteps-i)) : nothing
        ref[2,i+1]-ref[2,i]<-maxLat/2 ? ref[2,i+1:end]+=fill(maxLat,(nSteps-i)) : nothing
    end
+   ref=ref./uvetc["dx"]
    #
    comp_vel=IndividualDisplacements.VelComp
    get_vel=IndividualDisplacements.VelCopy
-   uInit=[tmp[1,:lon];tmp[1,:lat]]
+   uInit=[tmp[1,:lon];tmp[1,:lat]]./uvetc["dx"]
    du=fill(0.0,2)
    #
-   uvetc=IndividualDisplacements.ReadGriddedFields()
    tspan = (0.0,nSteps*3600.0)
    #prob = ODEProblem(get_vel,uInit,tspan,tmp)
    prob = ODEProblem(comp_vel,uInit,tspan,uvetc)
